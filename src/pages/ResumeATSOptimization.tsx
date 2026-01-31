@@ -410,7 +410,7 @@ const ATSOptimization = () => {
                 {/* Resume Upload Section */}
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-slate-200/50 shadow-lg shadow-slate-200/50 p-6 animate-fade-in">
                     <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2.5 bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 rounded-xl shadow-lg shadow-blue-500/20">
+                        <div className="p-2.5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl shadow-lg shadow-amber-500/20">
                             <FileUp className="w-5 h-5 text-white" />
                         </div>
                         <div>
@@ -530,7 +530,7 @@ const ATSOptimization = () => {
                                 className="w-full p-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2.5 bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 rounded-xl shadow-lg shadow-blue-500/20">
+                                    <div className="p-2.5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl shadow-lg shadow-amber-500/20">
                                         <Target className="w-5 h-5 text-white" />
                                     </div>
                                     <div className="text-left">
@@ -653,7 +653,7 @@ const ATSOptimization = () => {
                                 className="w-full p-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2.5 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl shadow-lg shadow-blue-500/20">
+                                    <div className="p-2.5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl shadow-lg shadow-amber-500/20">
                                         <Search className="w-5 h-5 text-white" />
                                     </div>
                                     <div className="text-left">
@@ -769,7 +769,7 @@ const ATSOptimization = () => {
                                 className="w-full p-6 flex items-center justify-between hover:bg-slate-50/50 transition-colors"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2.5 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg shadow-emerald-500/20">
+                                    <div className="p-2.5 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl shadow-lg shadow-amber-500/20">
                                         <FileText className="w-5 h-5 text-white" />
                                     </div>
                                     <div className="text-left">

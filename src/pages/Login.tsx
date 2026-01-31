@@ -6,10 +6,14 @@ import { toast } from "sonner";
 import { MockOAuthService } from "@/lib/mockOAuth";
 
 // Mock user database - in real app this comes from backend
-const mockUserDatabase: Record<string, { password: string; name: string; role: string; email: string }> = {
-  // Candidates
-  "candidate@email.com": { password: "password123", name: "Alex Johnson", role: "candidate", email: "candidate@email.com" },
-  "9876543210": { password: "password123", name: "Alex Johnson", role: "candidate", email: "candidate@email.com" },
+const mockUserDatabase: Record<string, { password: string; name: string; role: string; email: string; experienceLevel?: string }> = {
+  // Candidates - Experienced
+  "candidate@email.com": { password: "password123", name: "Alex Johnson", role: "candidate", email: "candidate@email.com", experienceLevel: "experienced" },
+  "9876543210": { password: "password123", name: "Alex Johnson", role: "candidate", email: "candidate@email.com", experienceLevel: "experienced" },
+
+  // Candidates - Fresher
+  "fresher@email.com": { password: "password123", name: "Sarah Williams", role: "candidate", email: "fresher@email.com", experienceLevel: "fresher" },
+  "9876543220": { password: "password123", name: "Sarah Williams", role: "candidate", email: "fresher@email.com", experienceLevel: "fresher" },
 
   // Recruiters
   "recruiter@company.com": { password: "recruiter123", name: "John Recruiter", role: "recruiter", email: "recruiter@company.com" },
@@ -63,7 +67,8 @@ const Login = () => {
 
         toast.success(`Welcome ${userData.name}!`);
 
-        // Check if first time user - route to experience level selection
+        // For OAuth users, ask them to select experience level (first time)
+        // Since we don't have their experience level from registration
         navigate("/experience-level");
       }
     };
@@ -99,7 +104,8 @@ const Login = () => {
       id: identifier,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      experienceLevel: user.experienceLevel || 'experienced' // Default to experienced if not set
     }));
 
     toast.success(`Welcome back, ${user.name}!`);
@@ -108,13 +114,9 @@ const Login = () => {
     if (user.role === 'recruiter') {
       navigate("/recruiter/dashboard");
     } else if (user.role === 'candidate') {
-      // Check if experience level is set, if not route to selection
-      const experienceLevel = JSON.parse(localStorage.getItem('currentUser') || '{}').experienceLevel;
-      if (!experienceLevel) {
-        navigate("/experience-level");
-      } else {
-        navigate("/resume");
-      }
+      // Both fresher and experienced users go to the same /resume flow
+      // The individual sections will show different content based on experienceLevel
+      navigate("/resume");
     } else {
       navigate("/resume");
     }
@@ -314,7 +316,7 @@ const Login = () => {
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                   </svg>
-                  <span className="text-sm font-semibold text-blue-700">Demo Google Login</span>
+                  <span className="text-sm font-semibold text-blue-700">Google</span>
                 </button>
               </div>
 
@@ -326,7 +328,7 @@ const Login = () => {
                   className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed group"
                 >
                   <Linkedin className="w-5 h-5 text-[#0077B5]" />
-                  <span className="text-sm font-semibold text-blue-700">Demo LinkedIn Login</span>
+                  <span className="text-sm font-semibold text-blue-700">LinkedIn</span>
                 </button>
               </div>
 
@@ -338,13 +340,11 @@ const Login = () => {
                   className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-gray-700 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed group"
                 >
                   <Github className="w-5 h-5 text-slate-800" />
-                  <span className="text-sm font-semibold text-gray-700">Demo GitHub Login</span>
+                  <span className="text-sm font-semibold text-gray-700">GitHub</span>
                 </button>
               </div>
 
-              <p className="text-xs text-center text-slate-500 mt-2">
-                💡 Demo buttons work without internet connection
-              </p>
+
             </div>
 
             {/* Register Link */}

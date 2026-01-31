@@ -31,10 +31,18 @@ const sections = [
 
 const ResumeBuilder = () => {
   const navigate = useNavigate();
+  const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  const isFresher = currentUser.experienceLevel === 'fresher';
 
   const handleSectionClick = (route: string) => {
     navigate(route);
   };
+
+  // Filter sections based on experience level
+  const displayedSections = sections.filter(section => {
+    if (isFresher && section.title === "Experience") return false;
+    return true;
+  });
 
   return (
     <AppLayout>
@@ -46,7 +54,7 @@ const ResumeBuilder = () => {
 
         {/* Content */}
         <div className="p-4 space-y-3">
-          {sections.map((section, index) => {
+          {displayedSections.map((section, index) => {
             const Icon = section.icon;
             return (
               <button

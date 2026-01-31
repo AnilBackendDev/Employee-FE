@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Briefcase, Plus, Trash2, Save, Calendar, Building, MapPin, Upload, FileText, X, CheckCircle, Info, AlertCircle, CreditCard } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -60,6 +60,24 @@ const ExperienceSection = () => {
 
     const [experiences, setExperiences] = useState<Experience[]>([createEmptyExperience()]);
     const [savedExperiences, setSavedExperiences] = useState<Experience[]>(experiences);
+
+    // Get user's experience level to customize labels
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const isFresher = currentUser.experienceLevel === 'fresher';
+
+    // Dynamic labels based on experience level
+    const labels = {
+        pageTitle: isFresher ? 'Achievements & Projects' : 'Work Experience',
+        itemTitle: isFresher ? 'Achievement' : 'Experience',
+        companyLabel: isFresher ? 'Organization / Project Name' : 'Company Name',
+        companyPlaceholder: isFresher ? 'Personal Project, College, Organization...' : 'Google, Microsoft, etc.',
+        titleLabel: isFresher ? 'Role / Achievement Title' : 'Job Title',
+        titlePlaceholder: isFresher ? 'Team Lead, Winner, Developer...' : 'Senior Software Engineer',
+        descriptionLabel: isFresher ? 'Description' : 'Job Description',
+        descriptionPlaceholder: isFresher ? 'Describe your achievement or project...' : 'Briefly describe your role and main responsibilities...',
+        achievementsLabel: isFresher ? 'Key Highlights' : 'Key Achievements & Accomplishments',
+        addButtonText: isFresher ? 'Add Another Achievement' : 'Add Another Experience',
+    };
 
     const handleInputChange = (id: string, field: keyof Experience, value: string | boolean | string[]) => {
         setExperiences((prev) =>
@@ -214,7 +232,7 @@ const ExperienceSection = () => {
                         >
                             <ArrowLeft className="w-5 h-5 text-slate-700" />
                         </button>
-                        <h1 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">Work Experience</h1>
+                        <h1 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">{labels.pageTitle}</h1>
                     </div>
                     {isEditing ? (
                         <button
@@ -292,7 +310,7 @@ const ExperienceSection = () => {
                                 <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-md">
                                     <Briefcase className="w-4 h-4 text-white" />
                                 </div>
-                                Experience {index + 1}
+                                {labels.itemTitle} {index + 1}
                             </h3>
                             {isEditing && experiences.length > 1 && (
                                 <button
@@ -307,12 +325,12 @@ const ExperienceSection = () => {
                         {/* Company */}
                         <div className="space-y-2">
                             <Label className="text-sm text-slate-600 flex items-center gap-2">
-                                <Building className="w-4 h-4" /> Company Name
+                                <Building className="w-4 h-4" /> {labels.companyLabel}
                             </Label>
                             <Input
                                 value={experience.company}
                                 onChange={(e) => handleInputChange(experience.id, "company", e.target.value)}
-                                placeholder="Google, Microsoft, etc."
+                                placeholder={labels.companyPlaceholder}
                                 disabled={!isEditing}
                                 className="border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl"
                             />
@@ -321,12 +339,12 @@ const ExperienceSection = () => {
                         {/* Job Title */}
                         <div className="space-y-2">
                             <Label className="text-sm text-slate-600 flex items-center gap-2">
-                                <Briefcase className="w-4 h-4" /> Job Title
+                                <Briefcase className="w-4 h-4" /> {labels.titleLabel}
                             </Label>
                             <Input
                                 value={experience.title}
                                 onChange={(e) => handleInputChange(experience.id, "title", e.target.value)}
-                                placeholder="Senior Software Engineer"
+                                placeholder={labels.titlePlaceholder}
                                 disabled={!isEditing}
                                 className="border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl"
                             />
@@ -390,12 +408,12 @@ const ExperienceSection = () => {
                         {/* Job Description */}
                         <div className="space-y-2">
                             <Label className="text-sm text-slate-600">
-                                Job Description
+                                {labels.descriptionLabel}
                             </Label>
                             <Textarea
                                 value={experience.description}
                                 onChange={(e) => handleInputChange(experience.id, "description", e.target.value)}
-                                placeholder="Briefly describe your role and main responsibilities..."
+                                placeholder={labels.descriptionPlaceholder}
                                 disabled={!isEditing}
                                 className="border-slate-200 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl min-h-[80px] resize-none"
                             />
@@ -404,7 +422,7 @@ const ExperienceSection = () => {
                         {/* Key Achievements */}
                         <div className="space-y-3">
                             <Label className="text-sm text-slate-600">
-                                Key Achievements & Accomplishments
+                                {labels.achievementsLabel}
                             </Label>
                             {experience.achievements.map((achievement, achIndex) => (
                                 <div key={achIndex} className="flex gap-2">
@@ -592,7 +610,7 @@ const ExperienceSection = () => {
                         className="w-full py-4 border-2 border-dashed border-blue-300 rounded-2xl text-blue-600 font-medium flex items-center justify-center gap-2 hover:bg-blue-50 transition-colors bg-white/50"
                     >
                         <Plus className="w-5 h-5" />
-                        Add Another Experience
+                        {labels.addButtonText}
                     </button>
                 )}
             </div>

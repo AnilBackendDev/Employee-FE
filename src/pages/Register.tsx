@@ -11,7 +11,7 @@ const Register = () => {
         phone: "",
         password: "",
         confirmPassword: "",
-        role: "candidate"
+        experienceLevel: "experienced" as 'experienced' | 'fresher'
     });
     const [otp, setOtp] = useState(["", "", "", "", "", ""]);
     const [showPassword, setShowPassword] = useState(false);
@@ -101,20 +101,12 @@ const Register = () => {
                 name: formData.fullName,
                 email: formData.email,
                 phone: formData.phone,
-                role: formData.role
+                role: "candidate",
+                experienceLevel: formData.experienceLevel
             }));
 
-            // Navigate based on role
-            switch (formData.role) {
-                case "candidate":
-                    navigate("/resume");
-                    break;
-                case "ta":
-                    navigate("/recruiter");
-                    break;
-                default:
-                    navigate("/");
-            }
+            // Navigate both user types to the same resume builder flow
+            navigate("/resume");
         } else {
             setError("Invalid OTP. Please try again. (Demo: 123456)");
         }
@@ -238,31 +230,31 @@ const Register = () => {
                                         </div>
                                     </div>
 
-                                    {/* Role Selection */}
+                                    {/* Experience Level Selection */}
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                                            I am a
+                                            Experience Level
                                         </label>
                                         <div className="grid grid-cols-2 gap-3">
                                             <button
                                                 type="button"
-                                                onClick={() => setFormData({ ...formData, role: "candidate" })}
-                                                className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${formData.role === "candidate"
-                                                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                                                        : "border-slate-200 text-slate-600 hover:border-slate-300"
+                                                onClick={() => setFormData({ ...formData, experienceLevel: "experienced" })}
+                                                className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${formData.experienceLevel === "experienced"
+                                                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                                                    : "border-slate-200 text-slate-600 hover:border-slate-300"
                                                     }`}
                                             >
-                                                🎯 Job Seeker
+                                                💼 Experienced
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => setFormData({ ...formData, role: "ta" })}
-                                                className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${formData.role === "ta"
-                                                        ? "border-blue-500 bg-blue-50 text-blue-700"
-                                                        : "border-slate-200 text-slate-600 hover:border-slate-300"
+                                                onClick={() => setFormData({ ...formData, experienceLevel: "fresher" })}
+                                                className={`py-3 px-4 rounded-xl border-2 text-sm font-medium transition-all ${formData.experienceLevel === "fresher"
+                                                    ? "border-purple-500 bg-purple-50 text-purple-700"
+                                                    : "border-slate-200 text-slate-600 hover:border-slate-300"
                                                     }`}
                                             >
-                                                💼 Recruiter
+                                                🎓 Fresher
                                             </button>
                                         </div>
                                     </div>
