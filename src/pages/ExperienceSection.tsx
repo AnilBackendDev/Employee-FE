@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
+import { candidateService, CandidateProfile, Experience as ApiExperience } from "@/services/candidateApi";
+
 
 interface DocumentFile {
     id: string;
@@ -59,7 +61,53 @@ const ExperienceSection = () => {
     const bankInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
     const [experiences, setExperiences] = useState<Experience[]>([createEmptyExperience()]);
+    const [fullProfile, setFullProfile] = useState<CandidateProfile | null>(null);
     const [savedExperiences, setSavedExperiences] = useState<Experience[]>(experiences);
+
+    // Load data from API on mount
+    useEffect(() => {
+        const loadExperiences = async () => {
+            const userJson = localStorage.getItem("currentUser");
+            if (!userJson) return;
+
+            try {
+                const user = JSON.parse(userJson);
+                const profile = await candidateService.getProfile(user.email);
+
+                if (profile) {
+                    setFullProfile(profile);
+                    if (profile.experiences && profile.experiences.length > 0) {
+                        const mappedExperiences: Experience[] = profile.experiences.map(apiExp => ({
+                            id: apiExp.id?.toString() || Math.random().toString(),
+                            company: apiExp.companyName || "",
+                            title: apiExp.designation || "",
+                            location: "",
+                            startDate: apiExp.fromDate || "",
+                            endDate: apiExp.toDate || "",
+                            current: !apiExp.toDate,
+                            description: "",
+                            achievements: [],
+                            payslips: [],
+                            bankStatements: []
+                        }));
+                        setExperiences(mappedExperiences);
+                        setSavedExperiences(mappedExperiences);
+                        setIsEditing(false);
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading experiences from API:", error);
+                const saved = localStorage.getItem("resumeExperience");
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    setExperiences(parsed);
+                    setSavedExperiences(parsed);
+                    setIsEditing(false);
+                }
+            }
+        };
+        loadExperiences();
+    }, []);
 
     // Get user's experience level to customize labels
     const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -201,19 +249,54 @@ const ExperienceSection = () => {
         }
     };
 
-    const handleConfirmSave = () => {
-        setSavedExperiences(experiences);
-        setIsEditing(false);
-        setShowConfirm(false);
+    const handleConfirmSave = async () => {
+        try {
+            // Map frontend experiences to API format
+            const apiExperiences: ApiExperience[] = experiences.map(exp => ({
+                id: isNaN(parseInt(exp.id)) ? undefined : parseInt(exp.id),
+                companyName: exp.company,
+                designation: exp.title,
+                fromDate: exp.startDate,
+                toDate: exp.endDate || ""
+            }));
 
-        // Save to localStorage
-        localStorage.setItem("resumeExperience", JSON.stringify(experiences));
-        localStorage.setItem("resumeExperienceComplete", "true");
+            // Prepare payload
+            const updatePayload: CandidateProfile = {
+                ...(fullProfile || {
+                    email: JSON.parse(localStorage.getItem("currentUser") || "{}").email || "",
+                    firstName: "", lastName: "", mobile: "", summary: "", linkedin: "", website: "",
+                    location: "", totalExperience: 0, currentCtc: 0, expectedCtc: 0, educations: []
+                }),
+                experiences: apiExperiences
+            };
 
-        toast({
-            title: "Experience Saved",
-            description: "Your work experience has been updated successfully.",
-        });
+            await candidateService.updateProfile(updatePayload);
+
+            setSavedExperiences(experiences);
+            setIsEditing(false);
+            setShowConfirm(false);
+
+            // Save to localStorage
+            localStorage.setItem("resumeExperience", JSON.stringify(experiences));
+            localStorage.setItem("resumeExperienceComplete", "true");
+
+            toast({
+                title: "Experience Saved",
+                description: "Your work history has been synced with the backend.",
+            });
+        } catch (error) {
+            console.error("Failed to save experiences:", error);
+            toast({
+                title: "Save Failed",
+                description: "Failed to sync with backend. Saved locally instead.",
+                variant: "destructive",
+            });
+
+            setSavedExperiences(experiences);
+            setIsEditing(false);
+            setShowConfirm(false);
+            localStorage.setItem("resumeExperience", JSON.stringify(experiences));
+        }
     };
 
     const handleEdit = () => {

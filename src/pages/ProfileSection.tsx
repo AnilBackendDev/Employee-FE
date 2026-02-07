@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
+import { candidateService, CandidateProfile } from "@/services/candidateApi";
+
 
 interface ProfileData {
     firstName: string;
@@ -37,21 +39,52 @@ const ProfileSection = () => {
         panCard: null,
     });
 
+    const [fullProfile, setFullProfile] = useState<CandidateProfile | null>(null);
+
     const [savedData, setSavedData] = useState<ProfileData>(formData);
 
-    // Load saved data from localStorage on mount
+    // Load saved data from API on mount
     useEffect(() => {
-        const savedProfile = localStorage.getItem("resumeProfile");
-        if (savedProfile) {
+        const loadProfile = async () => {
+            const userJson = localStorage.getItem("currentUser");
+            if (!userJson) return;
+
             try {
-                const parsedProfile = JSON.parse(savedProfile);
-                setFormData(parsedProfile);
-                setSavedData(parsedProfile);
-                setIsEditing(false);
+                const user = JSON.parse(userJson);
+                const profile = await candidateService.getProfile(user.email);
+
+                if (profile) {
+                    setFullProfile(profile);
+                    const mappedData: ProfileData = {
+                        firstName: profile.firstName || "",
+                        lastName: profile.lastName || "",
+                        email: profile.email || "",
+                        phone: profile.mobile || "",
+                        location: profile.location || "",
+                        linkedin: profile.linkedin || "",
+                        website: profile.website || "",
+                        summary: profile.summary || "",
+                        panCard: null, // Files aren't handled by this API yet
+                    };
+                    setFormData(mappedData);
+                    setSavedData(mappedData);
+                    setIsEditing(false);
+                }
             } catch (error) {
-                console.error("Error loading saved profile:", error);
+                console.error("Error loading profile from API:", error);
+
+                // Fallback to localStorage if API fails
+                const savedProfile = localStorage.getItem("resumeProfile");
+                if (savedProfile) {
+                    const parsedProfile = JSON.parse(savedProfile);
+                    setFormData(parsedProfile);
+                    setSavedData(parsedProfile);
+                    setIsEditing(false);
+                }
             }
-        }
+        };
+
+        loadProfile();
     }, []);
 
     const handleInputChange = (field: keyof ProfileData, value: string) => {
@@ -108,19 +141,55 @@ const ProfileSection = () => {
     };
 
 
-    const handleConfirmSave = () => {
-        setSavedData(formData);
-        setIsEditing(false);
-        setShowConfirm(false);
+    const handleConfirmSave = async () => {
+        try {
+            // Prepare payload for backend
+            const updatePayload: CandidateProfile = {
+                ...fullProfile,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                email: formData.email,
+                mobile: formData.phone,
+                location: formData.location,
+                linkedin: formData.linkedin,
+                website: formData.website,
+                summary: formData.summary,
+                // These should be preserved if they exist in fullProfile
+                totalExperience: fullProfile?.totalExperience || 0,
+                currentCtc: fullProfile?.currentCtc || 0,
+                expectedCtc: fullProfile?.expectedCtc || 0,
+                educations: fullProfile?.educations || [],
+                experiences: fullProfile?.experiences || [],
+            };
 
-        // Save to localStorage
-        localStorage.setItem("resumeProfile", JSON.stringify(formData));
-        localStorage.setItem("resumeProfileComplete", "true");
+            await candidateService.updateProfile(updatePayload);
 
-        toast({
-            title: "Profile Saved",
-            description: "Your profile information has been updated successfully.",
-        });
+            setSavedData(formData);
+            setIsEditing(false);
+            setShowConfirm(false);
+
+            // Keep localStorage in sync as backup
+            localStorage.setItem("resumeProfile", JSON.stringify(formData));
+            localStorage.setItem("resumeProfileComplete", "true");
+
+            toast({
+                title: "Profile Saved",
+                description: "Your profile has been synced with the backend.",
+            });
+        } catch (error) {
+            console.error("Failed to save profile:", error);
+            toast({
+                title: "Save Failed",
+                description: "Failed to sync with backend. Saved locally instead.",
+                variant: "destructive",
+            });
+
+            // Still save locally as fallback
+            setSavedData(formData);
+            setIsEditing(false);
+            setShowConfirm(false);
+            localStorage.setItem("resumeProfile", JSON.stringify(formData));
+        }
     };
 
 

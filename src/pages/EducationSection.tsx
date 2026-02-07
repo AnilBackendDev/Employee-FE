@@ -7,6 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
+import { candidateService, CandidateProfile, Education as ApiEducation } from "@/services/candidateApi";
+
 
 interface Education {
     id: string;
@@ -39,7 +42,51 @@ const EducationSection = () => {
     const [isEditing, setIsEditing] = useState(true);
 
     const [educations, setEducations] = useState<Education[]>([createEmptyEducation()]);
+    const [fullProfile, setFullProfile] = useState<CandidateProfile | null>(null);
     const [savedEducations, setSavedEducations] = useState<Education[]>(educations);
+
+    // Load data from API on mount
+    useEffect(() => {
+        const loadEducations = async () => {
+            const userJson = localStorage.getItem("currentUser");
+            if (!userJson) return;
+
+            try {
+                const user = JSON.parse(userJson);
+                const profile = await candidateService.getProfile(user.email);
+
+                if (profile) {
+                    setFullProfile(profile);
+                    if (profile.educations && profile.educations.length > 0) {
+                        const mappedEducations: Education[] = profile.educations.map(apiEdu => ({
+                            id: apiEdu.id?.toString() || Math.random().toString(),
+                            institution: apiEdu.institution || "",
+                            degree: apiEdu.degree || "",
+                            field: "", // Field isn't in backend yet
+                            startDate: "",
+                            endDate: apiEdu.graduationYear ? `${apiEdu.graduationYear}-05` : "",
+                            current: false,
+                            gpa: "",
+                            achievements: ""
+                        }));
+                        setEducations(mappedEducations);
+                        setSavedEducations(mappedEducations);
+                        setIsEditing(false);
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading educations from API:", error);
+                const saved = localStorage.getItem("resumeEducation");
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    setEducations(parsed);
+                    setSavedEducations(parsed);
+                    setIsEditing(false);
+                }
+            }
+        };
+        loadEducations();
+    }, []);
 
     const handleInputChange = (id: string, field: keyof Education, value: string | boolean) => {
         setEducations((prev) =>
@@ -71,19 +118,53 @@ const EducationSection = () => {
         }
     };
 
-    const handleConfirmSave = () => {
-        setSavedEducations(educations);
-        setIsEditing(false);
-        setShowConfirm(false);
+    const handleConfirmSave = async () => {
+        try {
+            // Map frontend educations to API format
+            const apiEducations: ApiEducation[] = educations.map(edu => ({
+                id: isNaN(parseInt(edu.id)) ? undefined : parseInt(edu.id),
+                degree: edu.degree,
+                institution: edu.institution,
+                graduationYear: parseInt(edu.endDate.split("-")[0]) || 2024
+            }));
 
-        // Save to localStorage
-        localStorage.setItem("resumeEducation", JSON.stringify(educations));
-        localStorage.setItem("resumeEducationComplete", "true");
+            // Prepare payload
+            const updatePayload: CandidateProfile = {
+                ...(fullProfile || {
+                    email: JSON.parse(localStorage.getItem("currentUser") || "{}").email || "",
+                    firstName: "", lastName: "", mobile: "", summary: "", linkedin: "", website: "",
+                    location: "", totalExperience: 0, currentCtc: 0, expectedCtc: 0, experiences: []
+                }),
+                educations: apiEducations
+            };
 
-        toast({
-            title: "Education Saved",
-            description: "Your education history has been updated successfully.",
-        });
+            await candidateService.updateProfile(updatePayload);
+
+            setSavedEducations(educations);
+            setIsEditing(false);
+            setShowConfirm(false);
+
+            // Save to localStorage
+            localStorage.setItem("resumeEducation", JSON.stringify(educations));
+            localStorage.setItem("resumeEducationComplete", "true");
+
+            toast({
+                title: "Education Saved",
+                description: "Your education history has been synced with the backend.",
+            });
+        } catch (error) {
+            console.error("Failed to save educations:", error);
+            toast({
+                title: "Save Failed",
+                description: "Failed to sync with backend. Saved locally instead.",
+                variant: "destructive",
+            });
+
+            setSavedEducations(educations);
+            setIsEditing(false);
+            setShowConfirm(false);
+            localStorage.setItem("resumeEducation", JSON.stringify(educations));
+        }
     };
 
     const handleEdit = () => {
